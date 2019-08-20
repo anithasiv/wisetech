@@ -1,0 +1,330 @@
+/project/
+USE [C29072019]
+GO
+/****** Object:  StoredProcedure [dbo].[samplepr]    Script Date: 8/19/2019 12:09:13 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/*
+1. Split all the procedures (3 Proc)
+2. for 1st proc - EmployeeId / Full Data
+3. for 2nd proc - Include date, employee id and number of hrs 
+4. for 3rd Proc - Employee Wise / Full Data - Filter by Month or EmployeeId
+*/
+--for 1st proc - EmployeeId / Full Data
+alter procedure samplepr(@employeeid int=0)
+	 as
+	 begin
+	 select *from priya.employees_deta t1 join priya.employee_attendance t2 on t1.employeeid=t2.employeeid 
+	 where t2.employeeid=@employeeid
+	 end
+	 go
+	 samplepr @employeeid=2
+--for 2nd proc - Include date, employee id and number of hrs 
+ alter procedure employeeworking_hrs(@employeeid int=0)
+	as
+	begin
+	if(exists(select*from  priya.employees_deta where employeeid=@employeeid))
+    begin
+	  --select employeeid,last_name,doj,phone from  priya.employees_deta where employeeid=@employeeid
+	  select attendance_date,t2.employeeid,datediff(hour,in_time,out_time) number_of_hours from priya.employees_deta t1 
+     join priya.employee_attendance t2 on t1.employeeid=t2.employeeid where t2.employeeid=@employeeid
+	 end
+	 else
+	 begin
+	 --select * FROM priya.employees_deta 
+	 select *  from priya.employees_deta t1 join priya.employee_attendance t2 on t1.employeeid=t2.employeeid
+     end
+	 end
+	 go
+	 employeeworking_hrs @employeeid=3
+ --for 3rd Proc - Employee Wise / Full Data - Filter by Month or EmployeeId
+	create procedure month_details
+	as
+	begin
+	set nocount on;
+	 select attendance_date, datepart(month,attendance_date)month, 
+   sum(case when status= 'P' then 1 else 0 end )total_pres,
+   sum(case when status= 'A' then 1 else 0 end )total_ab
+    from priya.employee_attendance 
+	 group by attendance_date
+  end 
+   go
+   ///////
+   sELECT*FROM EMPLOYEES
+select *from departments
+--1
+ select last_name,departments.department_id,department_name from employees join departments 
+on employees.department_id=departments.department_id 
+--2
+select distinct  top 2 job_id,location_id from employees join departments  on employees.department_id=departments.department_id 
+ where  departments.department_id= 80
+--3
+select last_name,department_name,locations .location_id,city from employees join departments 
+on employees.department_id=departments.department_id join locations on departments.location_id=locations.location_id
+where commission_pct=0
+--4
+select lower(last_name),department_name,departments.department_id from employees join departments 
+on employees.department_id=departments.department_id
+--5
+select last_name,job_id,departments.department_id,department_name  from employees join departments 
+on employees.department_id=departments.department_id where department_name like 'M%'
+--6
+  select e.employee_id, e.last_name, m.employee_id ManagerId, m.last_name ManagerName from employees e
+  left join  employees m on
+  m.employee_id = e.manager_id
+
+  select e.employee_id emp#,e.last_name employee,m.employee_id mgr#,m.last_name manager from employees  e join employees m 
+  on m.employee_id=e.manager_id
+  -- 7 Modify Query 6 to display all employees including King, who has no manager.
+  select e.last_name employee,e.employee_id emp#,m.last_name manager,m.employee_id mgr#  from employees e 
+ left join employees m
+  on e.manager_id=m.employee_id 
+  --Create a query that displays employee last names, department numbers, and all the employees who work in the same department as a given employee. Give each column an appropriate label
+ -- union all
+  select employees.last_name employee,departments.department_id department,count(employees.last_name)
+   from employees join departments
+   on employees.department_id=departments.department_id
+    where departments.department_id >10  group by departments.department_id having count(employees.last_name)>1
+   order by departments.department_id asc 
+  
+	select*locations from employees
+ --Create a query to display the name and hire date of any employee hired after employee Davies.
+  select last_name,hire_date from employees where  hire_Date >(select hire_date from employees where last_name='davies')
+  --Display the names and hire dates for all employees who were hired before their managers, along with their manager’s names and hire dates. Label the columns Employee, Emp,Hired, Manager, and Mgr Hired, respectively
+  select e.last_name,e.hire_date,m.last_name,m.hire_Date from employees e join employees m
+   on e.employee_id=m.manager_id where e.hire_date >m.hire_date
+   --Create a query that displays employee last names, department numbers, and all the employees who work in the same department as a given employee. Give each column an appropriate label.
+  
+//////
+sELECT*FROM EMPLOYEES
+select *from departments
+--1
+ select last_name,departments.department_id,department_name from employees join departments 
+on employees.department_id=departments.department_id 
+--2
+select distinct  top 2 job_id,location_id from employees join departments  on employees.department_id=departments.department_id 
+ where  departments.department_id= 80
+--3
+select last_name,department_name,locations .location_id,city from employees join departments 
+on employees.department_id=departments.department_id join locations on departments.location_id=locations.location_id
+where commission_pct=0
+--4
+select lower(last_name),department_name,departments.department_id from employees join departments 
+on employees.department_id=departments.department_id
+--5
+select last_name,job_id,departments.department_id,department_name  from employees join departments 
+on employees.department_id=departments.department_id where department_name like 'M%'
+--6
+  select e.employee_id, e.last_name, m.employee_id ManagerId, m.last_name ManagerName from employees e
+  left join  employees m on
+  m.employee_id = e.manager_id
+
+  select e.employee_id emp#,e.last_name employee,m.employee_id mgr#,m.last_name manager from employees  e join employees m 
+  on m.employee_id=e.manager_id
+  -- 7 Modify Query 6 to display all employees including King, who has no manager.
+  select e.last_name employee,e.employee_id emp#,m.last_name manager,m.employee_id mgr#  from employees e 
+ left join employees m
+  on e.manager_id=m.employee_id 
+  --Create a query that displays employee last names, department numbers, and all the employees who work in the same department as a given employee. Give each column an appropriate label
+ -- union all
+  select employees.last_name employee,departments.department_id department,count(employees.last_name)
+   from employees join departments
+   on employees.department_id=departments.department_id
+    where departments.department_id >10  group by departments.department_id having count(employees.last_name)>1
+   order by departments.department_id asc 
+  
+	select*locations from employees
+ --Create a query to display the name and hire date of any employee hired after employee Davies.
+  select last_name,hire_date from employees where  hire_Date >(select hire_date from employees where last_name='davies')
+  --Display the names and hire dates for all employees who were hired before their managers, along with their manager’s names and hire dates. Label the columns Employee, Emp,Hired, Manager, and Mgr Hired, respectively
+  select e.last_name,e.hire_date,m.last_name,m.hire_Date from employees e join employees m
+   on e.employee_id=m.manager_id where e.hire_date >m.hire_date
+   --Create a query that displays employee last names, department numbers, and all the employees who work in the same department as a given employee. Give each column an appropriate label.
+  
+----
+select *from employees
+--1
+select max(salary),min(salary),sum(salary),avg(salary) from employees
+--2
+select job_id ,max(salary),min(salary),sum(salary),avg(salary) from employees
+group by job_id
+--3
+select job_id,count(job_id) from employees
+group by job_id
+--4
+select count(manager_id) from employees
+--5de
+select max(salary)-min(salary) difference from employees 
+--6
+select manager_id,min(salary) from employees group by manager_id
+having min(salary)>6000 and manager_id is not null
+order by  min(salary) desc
+--7
+select * from departments
+select*from locations
+select department_name,avg(salary) salary ,location_id location,count(employee_id)numberofpeople from employees t1 join departments t2 
+on t1.department_id=t2.department_id 
+group by location_id,department_name
+--8
+select count(employee_id) total ,
+  sum(case when datepart(yy,hire_date)='1995'then 1 else 0 end)'1995',
+ sum(case when datepart(yy,hire_date)='1996' then 1  else 0 end)'1996',
+sum(case when datepart(yy,hire_date)='1997' then 1 else 0 end)'1997',
+sum(case when datepart(yy,hire_date)='1998' then 1 else 0 end)'1998' from employees
+--9
+select *from employees
+departments
+select job_id job,
+case when department_id='20'then salary end dept20,
+case when department_id='50'then salary end dept20,
+case when department_id='80'then salary end dept20,
+case when department_id='90'then salary end dept20,salary total
+from employees
+order by job_id
+-----
+sELECT*FROM EMPLOYEES
+select *from departments
+--1
+ select last_name,departments.department_id,department_name from employees join departments 
+on employees.department_id=departments.department_id 
+--2
+select top 2 job_id,location_id from employees join departments  on employees.manager_id=departments.manager_id 
+ order by  location_id desc
+--3
+select last_name,department_name,locations .location_id,city from employees join departments 
+on employees.department_id=departments.department_id join locations on departments.location_id=locations.location_id
+where commission_pct=0
+--4
+select lower(last_name),department_name from employees join departments 
+on employees.department_id=departments.department_id
+--5
+select last_name,job_id,departments.department_id,department_name  from employees join departments 
+on employees.department_id=departments.department_id where department_name like 'M%'
+--6
+  select e.employee_id, e.last_name, m.employee_id ManagerId, m.last_name ManagerName from employees e
+  join  employees m on
+  m.employee_id = e.manager_id
+
+  select e.employee_id emp#,e.last_name employee,m.employee_id mgr#,m.last_name manager from employees  e join employees m 
+  on m.employee_id=e.manager_id
+  -- 7 Modify Query 6 to display all employees including King, who has no manager.
+  select e.last_name employee,e.employee_id emp#,m.last_name manager,m.manager_id mgr#  from employees e 
+  join employees m
+  on m.employee_id=e.employee_id 
+  --Create a query that displays employee last names, department numbers, and all the employees who work in the same department as a given employee. Give each column an appropriate label
+  select last_name employee,departments.department_id department
+   from employees join departments
+   on employees.department_id=departments.department_id
+   where <  departments.department_id 
+   order by departments.department_id asc
+--Create a query to display the name and hire date of any employee hired after employee Davies.
+  select last_name,hire_date from employees where  hire_Date >(select hire_date from employees where last_name='davies')
+  --Display the names and hire dates for all employees who were hired before their managers, along with their manager’s names and hire dates. Label the columns Employee, Emp,Hired, Manager, and Mgr Hired, respectively
+  select e.last_name,e.hire_date,m.last_name,m.hire_Date from employees e join employees m
+   on e.employee_id=m.manager_id where e.hire_date >m.hire_date
+
+  select e.last_name employee1, e.employee_id employee2,department
+from employees e join m using (employees)
+where t1.employeeid < t2.employeeid
+
+
+  ---
+select*from employees
+select*from departments
+select *from locations
+--1
+select last_name,t2.department_id,department_name from employees t1 join departments t2 on t1.department_id=t2.department_id
+--2
+select job_id,location_id from employees t1  join departments t2 on t1.department_id=t2.department_id where t1.department_id='80'
+--3
+select last_name,department_name,t3.location_id,city from employees t1 join departments t2 on t1.department_id=t2.department_id 
+join locations t3 on t2.location_id=t3.location_id where commission_pct='0'
+--4
+select last_name,department_name from employees t1 join departments t2 on t1.department_id=t2.department_id
+--5
+select last_name, job_id,t2.department_id,department_name from employees t1 join departments t2 on t1.department_id=t2.department_id join locations t3 
+ on t2.location_id=t3.location_id where city ='toronto'
+ --6
+ select t2.last_name employee,t2.employee_id ,t2.last_name manager,t2.manager_id from employees t1 inner join employees t2 
+ on t2.manager_id=t1.employee_id 
+ --7
+ select 
+--\
+select*from employees
+select job_id from employees 
+--1
+select GETDATE() 
+--2
+select LAST_NAME,  DATEDIFF(M,hire_date,getdate())MONTHS_WORKED from employees
+
+--3
+ select last_name, hire_date ,datepart(m,hire_date)[month], DATENAME(dw, hire_date) day from employees
+ /* select hire_date from employees*/
+
+select last_name,hire_date, DATENAME(dw, hire_date) ,datename(dw,hire_date)day from employees
+
+  select last_name, hire_date,datepart(dw,hire_date)[Date]  , DATENAME(dw, hire_date) day ,
+    CASE 
+          WHEN hire_date = 'Monday'  then 'one'
+          WHEN hire_date =  'Tuesday' then 'two'
+          WHEN hire_date =  'Wednesday' then 'three'
+          WHEN hire_date =  'Thursday' then' four'
+          WHEN hire_date = 'Friday' then 'five'
+		 WHEN  hire_date=  'Saturday'   then' six'
+          WHEN hire_date =  'Sunday' then 'seven'
+
+	END day
+	  from employees
+
+select DATEPART(dw, hire_date) date, DATENAME(dw, hire_date) day from employees
+order by date
+select last_name,case when  commission_pct='0' then 'no commission' else 'no commision'  end comm from employees 
+ select last_name as employees_and_their_salaries,salary,salary+(salary*12) annualsalary,(annualsalary/1000,'*'
+ from employees 
+ order by salary
+  select hire_date,  datename(month,getdate())from employees
+ --4
+  select job_id ,case job_id
+ when 'st_clerk' then 'E'
+ when 'ad_pres' then 'A'
+ when 'ad_vp' then 'O'
+ when 'ir_prog' then 'c'
+ when 'st_man' then 'B'
+ when 'ac_mgr' then 'O'
+ when 'ac_account' then 'O'
+ else 'NA' 
+ end grade
+ from employees
+ 
+--1.	Create a query to display the last name and salary for all employees. Format the salary to be 15 characters long. left-padded with $. Label the column SALARY.
+       select last_name,replicate('$',15-len(salary))+rtrim(salary)salary from employees
+
+--Display the last name, hire date and day of the week on which the employee started. Label the column DAY. Order the results by the day of the week starting with Monday.
+ select last_name,format(hire_date,'dd-MMM-yy'),datename(weekday,hire_date),
+ isnull(nullif(datepart(weekday,hire_date)-1,0),7)day from employees order by day
+ --2
+ select rtrim(last_name)+replicate('*',salary/1000)EMPLOYEES_AND_THEIR_SALARIES from employees
+
+
+
+
+
+ 
+
+
+
+
+
+  
+ 
+
+  
+
+  
+  
+   
+
+  
+  
